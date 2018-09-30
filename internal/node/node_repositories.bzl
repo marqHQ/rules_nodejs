@@ -189,6 +189,7 @@ filegroup(
     exclude = [
       "**/*.md",
       "**/*.html",
+      "**/*.pyc",
     ],
   ),
 )
