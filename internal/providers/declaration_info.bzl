@@ -30,10 +30,12 @@ Note: historically this was a subset of the string-typed "typescript" provider.
         "transitive_declarations": """A depset of typings files produced by this rule and all its transitive dependencies.
 This prevents needing an aspect in rules that consume the typings, which improves performance.""",
         "type_blacklisted_declarations": """A depset of .d.ts files that we should not use to infer JSCompiler types (via tsickle)""",
+        "global_declarations": "A depset of typings files for global srcs",
+        "transitive_global_declarations": "A depset of the typings files that should be included to all transitive dependencies",
     },
 )
 
-def declaration_info(declarations, deps = []):
+def declaration_info(declarations, global_declarations, deps = []):
     """Constructs a DeclarationInfo including all transitive files needed to type-check from DeclarationInfo providers in a list of deps.
 
     Args:
@@ -46,13 +48,18 @@ def declaration_info(declarations, deps = []):
 
     # TODO: add some checking actions to ensure the declarations are well-formed and don't have semantic diagnostics
     transitive_depsets = [declarations]
+    transitive_global_depsets = [global_declarations]
     for dep in deps:
         if DeclarationInfo in dep:
             transitive_depsets.append(dep[DeclarationInfo].transitive_declarations)
+            if getattr(dep[DeclarationInfo], "transitive_global_declarations", None):
+                transitive_global_depsets.append(dep[DeclarationInfo].transitive_global_declarations)
 
     return DeclarationInfo(
         declarations = declarations,
         transitive_declarations = depset(transitive = transitive_depsets),
+        global_declarations = global_declarations,
+        transitive_global_declarations = depset(transitive = transitive_global_depsets),
         # Downstream ts_library rules will fail if they don't find this field
         # Even though it is only for Google Closure Compiler externs generation
         type_blacklisted_declarations = depset(),

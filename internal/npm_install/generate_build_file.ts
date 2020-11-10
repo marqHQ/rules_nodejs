@@ -63,6 +63,8 @@ const LOCK_FILE_PATH = args[2];
 const INCLUDED_FILES = args[3] ? args[3].split(',') : [];
 const BAZEL_VERSION = args[4];
 
+const isModuleRegExp = new RegExp('^export', 'm');
+
 if (require.main === module) {
   main();
 }
@@ -875,7 +877,14 @@ function printPackage(pkg: Dep) {
   // Files that are part of the npm package not including its nested node_modules
   // (filtered by the 'included_files' attribute)
   const pkgFiles = includedRunfiles.filter((f: string) => !f.startsWith('node_modules/'));
-  const pkgFilesStarlark = pkgFiles.length ? starlarkFiles('srcs', pkgFiles) : '';
+  const globalFiles = pkgFiles.filter((f) => f.endsWith('.d.ts')).filter((f) => {
+    const fileContents =
+        fs.readFileSync(path.join('node_modules', pkg._dir, f), {encoding: 'utf-8'});
+    return !isModuleRegExp.test(fileContents);
+  })
+  const pkgGlobalFilesStarlark = globalFiles.length ? starlarkFiles('srcs', globalFiles) : '';
+  const nonGlobalFiles = pkgFiles.filter((f) => globalFiles.indexOf(f) === -1);
+  const pkgFilesStarlark = nonGlobalFiles.length ? starlarkFiles('srcs', nonGlobalFiles) : '';
 
   // Files that are in the npm package's nested node_modules
   // (filtered by the 'included_files' attribute)
@@ -929,6 +938,11 @@ filegroup(
     name = "${pkg._name}__files",${pkgFilesStarlark}
 )
 
+# Files that have side-effects and must always be loaded
+filegroup(
+    name = "${pkg._name}__global_files",${pkgGlobalFilesStarlark}
+)
+
 # Files that are in the npm package's nested node_modules
 # (filtered by the 'included_files' attribute)
 filegroup(
@@ -949,7 +963,7 @@ filegroup(
 # but not including nested node_modules.
 filegroup(
     name = "${pkg._name}__all_files",
-    srcs = [":${pkg._name}__files", ":${pkg._name}__not_files"],
+    srcs = [":${pkg._name}__files", ":${pkg._name}__global_files", ":${pkg._name}__not_files"],
 )
 
 # The primary target for this package for use in rule deps
@@ -957,6 +971,7 @@ js_library(
     name = "${pkg._name}",
     # direct sources listed for strict deps support
     srcs = [":${pkg._name}__files"],
+    global_srcs = [":${pkg._name}__global_files"],
     # nested node_modules for this package plus flattened list of direct and transitive dependencies
     # hoisted to root by the package manager
     deps = [
@@ -967,7 +982,8 @@ js_library(
 # Target is used as dep for main targets to prevent circular dependencies errors
 js_library(
     name = "${pkg._name}__contents",
-    srcs = [":${pkg._name}__files", ":${pkg._name}__nested_node_modules"],${namedSourcesStarlark}
+    srcs = [":${pkg._name}__files", ":${pkg._name}__global_files", ":${
+      pkg._name}__nested_node_modules"],${namedSourcesStarlark}
     visibility = ["//:__subpackages__"],
 )
 
