@@ -914,13 +914,17 @@ function printPackage(pkg: Dep) {
 
   // Typings files that are part of the npm package not including nested node_modules
   const dtsSources =
-      filterFiles(pkg._runfiles, ['.d.ts']).filter((f: string) => !f.startsWith('node_modules/'));
-  const dtsStarlark = dtsSources.length ?
-      starlarkFiles(
-          'srcs', dtsSources,
-          `# ${
-              pkg._dir} package declaration files (and declaration files in nested node_modules)`) :
-      '';
+      filterFiles(pkg._runfiles, [
+        '.d.ts'
+      ]).filter((f: string) => !f.startsWith('node_modules/') && globalFiles.indexOf(f) === -1);
+  const dtsStarlark =
+      (dtsSources.length ?
+           starlarkFiles(
+               'srcs', dtsSources,
+               `# ${
+                   pkg._dir} package declaration files (and declaration files in nested node_modules)`) :
+           '') +
+      (globalFiles.length ? starlarkFiles('global_srcs', globalFiles) : '');
 
   // Flattened list of direct and transitive dependencies hoisted to root by the package manager
   const deps = [pkg].concat(pkg._dependencies.filter(dep => dep !== pkg && !dep._isNested));

@@ -529,10 +529,13 @@ function printPackage(pkg) {
     const namedSourcesStarlark = namedSources.length ?
         starlarkFiles('named_module_srcs', namedSources, '# subset of srcs that are javascript named-UMD or named-AMD scripts') :
         '';
-    const dtsSources = filterFiles(pkg._runfiles, ['.d.ts']).filter((f) => !f.startsWith('node_modules/'));
-    const dtsStarlark = dtsSources.length ?
+    const dtsSources = filterFiles(pkg._runfiles, [
+        '.d.ts'
+    ]).filter((f) => !f.startsWith('node_modules/') && globalFiles.indexOf(f) === -1);
+    const dtsStarlark = (dtsSources.length ?
         starlarkFiles('srcs', dtsSources, `# ${pkg._dir} package declaration files (and declaration files in nested node_modules)`) :
-        '';
+        '') +
+        (globalFiles.length ? starlarkFiles('global_srcs', globalFiles) : '');
     const deps = [pkg].concat(pkg._dependencies.filter(dep => dep !== pkg && !dep._isNested));
     const depsStarlark = deps.map(dep => `"//${dep._dir}:${dep._name}__contents",`).join('\n        ');
     let result = `load("@build_bazel_rules_nodejs//:index.bzl", "js_library")
