@@ -50,6 +50,7 @@ _ATTRS = {
     "module_name": attr.string(
         doc = "Internal use only. It will be removed soon.",
     ),
+    "declared_modules": attr.string_list_dict(),
     "named_module_srcs": attr.label_list(
         doc = """Non-public legacy API, not recommended to make new usages.
         A subset of srcs that are javascript named-UMD or
