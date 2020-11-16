@@ -21,6 +21,8 @@ const LOCK_FILE_PATH = args[2];
 const INCLUDED_FILES = args[3] ? args[3].split(',') : [];
 const BAZEL_VERSION = args[4];
 const isModuleRegExp = new RegExp('^export|^import', 'm');
+const isNotOnlyDeclaredModuleRegExp = new RegExp('^(?:\w)(?!eclare module)', 'm');
+const declaredModulesRegExp = /^declare module ["']([\w-_/]+)["'] \{/gm;
 if (require.main === module) {
     main();
 }
@@ -503,6 +505,24 @@ function findFile(pkg, m) {
     }
     return undefined;
 }
+function mapOfSetsToObjOfArray(map, mapFn) {
+    const ret = {};
+    for (const [key, value] of map.entries()) {
+        ret[key] = Array.from(value, mapFn);
+    }
+    return ret;
+}
+function matchAll(string, regex) {
+    if (regex.flags.indexOf('g') === -1) {
+        throw new Error('matchAll will infinitely loop without the `g` flag set');
+    }
+    const matches = [];
+    let match;
+    while ((match = regex.exec(string)) !== null) {
+        matches.push(match);
+    }
+    return matches;
+}
 function printPackage(pkg) {
     function starlarkFiles(attr, files, comment = '') {
         return `
@@ -510,15 +530,43 @@ function printPackage(pkg) {
         ${files.map((f) => `"//:node_modules/${pkg._dir}/${f}",`).join('\n        ')}
     ],`;
     }
+    function starlarkStringListDict(attr, dict) {
+        return `\n${attr} = ${JSON.stringify(dict, undefined, '    ')},`.split('\n').join('\n    ');
+    }
     const includedRunfiles = filterFiles(pkg._runfiles, INCLUDED_FILES);
+    let declaredModules = undefined;
     const pkgFiles = includedRunfiles.filter((f) => !f.startsWith('node_modules/'));
     const ambientFiles = pkgFiles.filter((f) => f.endsWith('.d.ts')).filter((f) => {
         const fileContents = fs.readFileSync(path.join('node_modules', pkg._dir, f), { encoding: 'utf-8' });
-        return !isModuleRegExp.test(fileContents);
+        if (isModuleRegExp.test(fileContents)) {
+            return false;
+        }
+        else {
+            let modulesDeclaredHere = matchAll(fileContents, declaredModulesRegExp);
+            if (modulesDeclaredHere.length > 0) {
+                if (!declaredModules) {
+                    declaredModules = new Map();
+                }
+                for (const moduleDeclaredHere of modulesDeclaredHere) {
+                    const moduleName = moduleDeclaredHere[1];
+                    if (!declaredModules.has(moduleName)) {
+                        declaredModules.set(moduleName, new Set());
+                    }
+                    declaredModules.get(moduleName).add(f);
+                }
+                if (!isNotOnlyDeclaredModuleRegExp.test(fileContents)) {
+                    return false;
+                }
+            }
+            return true;
+        }
     });
     const pkgAmbientFilesStarlark = ambientFiles.length ? starlarkFiles('srcs', ambientFiles) : '';
     const nonAmbientFiles = pkgFiles.filter((f) => ambientFiles.indexOf(f) === -1);
     const pkgFilesStarlark = nonAmbientFiles.length ? starlarkFiles('srcs', nonAmbientFiles) : '';
+    const declaredModulesStarlark = declaredModules ?
+        starlarkStringListDict('declared_modules', mapOfSetsToObjOfArray(declaredModules, (fileName) => `${pkg._dir.replace(/[^\/]*./g, '../')}node_modules/${pkg._dir}/${fileName}`)) :
+        '';
     const nestedNodeModules = includedRunfiles.filter((f) => f.startsWith('node_modules/'));
     const nestedNodeModulesStarlark = nestedNodeModules.length ? starlarkFiles('srcs', nestedNodeModules) : '';
     const notPkgFiles = pkg._files.filter((f) => !f.startsWith('node_modules/') && !includedRunfiles.includes(f));
@@ -582,7 +630,7 @@ js_library(
     name = "${pkg._name}",
     # direct sources listed for strict deps support
     srcs = [":${pkg._name}__files"],
-    ambient_srcs = [":${pkg._name}__ambient_files"],
+    ambient_srcs = [":${pkg._name}__ambient_files"],${declaredModulesStarlark}
     # nested node_modules for this package plus flattened list of direct and transitive dependencies
     # hoisted to root by the package manager
     deps = [
