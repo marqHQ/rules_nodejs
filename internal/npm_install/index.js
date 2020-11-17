@@ -20,8 +20,8 @@ const RULE_TYPE = args[1];
 const LOCK_FILE_PATH = args[2];
 const INCLUDED_FILES = args[3] ? args[3].split(',') : [];
 const BAZEL_VERSION = args[4];
-const isModuleRegExp = new RegExp('^export|^import', 'm');
-const isNotOnlyDeclaredModuleRegExp = new RegExp('^(?:\w)(?!eclare module)', 'm');
+const isModuleRegExp = /^export|^import/m;
+const isNotOnlyDeclaredModuleRegExp = /^\w(?!eclare module)/m;
 const declaredModulesRegExp = /^declare module ["']([\w-_/]+)["'] \{/gm;
 if (require.main === module) {
     main();
