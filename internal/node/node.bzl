@@ -627,7 +627,7 @@ Predefined genrule variables are not supported in this context.
 
 _NODEJS_EXECUTABLE_OUTPUTS = {
     "launcher_sh": "%{name}.sh",
-    "loader_script": "%{name}_loader.js",
+    "loader_script": "%{name}_loader.mjs",
     "require_patch_script": "%{name}_require_patch.js",
 }
 
