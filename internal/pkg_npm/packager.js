@@ -182,17 +182,33 @@ function main(args) {
    * Gets the output path for the given file, relative to the output package directory.
    * e.g. if the file path is `bazel-out/<..>/bin/packages/core/index.js` and the
    * owning package is `packages/core`, then `index.js` is being returned.
+   * 
+   * Function modified from its original implementation to be more lenient about the
+   * kind of prefixes its willing to strip off the paths.
    * @param file {BazelFileInfo}
    * @returns {string}
    */
   function getOwningPackageRelativeOutPath(file) {
+    let relativePath = (() => {
+      for (const workspaceName of vendorExternal) {
+        if (file.shortPath.startsWith(`../${workspaceName}`)) {
+          return path.relative(`../${workspaceName}`, file.shortPath);
+        }
+      }
+
+      return path.relative(owningPackageName, file.shortPath);
+    })();
+    // I changed this from the master branch to slightly misuse the
+    // vendorExternal field to not to just be external pkg_npms but also
+    // any prefixes you want to strip off files for generated output dirs
+    // this basically just strips any prefixes off the filenames in the
+    // output package
     for (const workspaceName of vendorExternal) {
-      if (file.shortPath.startsWith(`../${workspaceName}`)) {
-        return path.relative(`../${workspaceName}`, file.shortPath);
+      if (relativePath.startsWith(workspaceName)) {
+        return path.relative(workspaceName, relativePath);
       }
     }
-
-    return path.relative(owningPackageName, file.shortPath);
+    return relativePath;
   }
 
   // Deps like bazel-bin/baseDir/my/path is copied to outDir/my/path.
