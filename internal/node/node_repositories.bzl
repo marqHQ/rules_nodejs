@@ -695,6 +695,10 @@ host_platform="{host_platform}"
 
 _nodejs_repo_host_os_alias = repository_rule(_nodejs_host_os_alias_impl)
 
+# Exported so that //:extensions.bzl can create the @nodejs alias repo without
+# going through the WORKSPACE-only node_repositories() macro.
+nodejs_repo_host_os_alias = _nodejs_repo_host_os_alias
+
 def node_repositories(**kwargs):
     """
     Wrapper macro around node_repositories_rule to call it for each platform.

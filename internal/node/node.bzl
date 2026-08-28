@@ -258,6 +258,7 @@ fi
         #       Need a smarter split operation than `expanded_arg.split(" ")` as it will split
         #       up args with intentional spaces and it will fail for expanded files with spaces.
         "TEMPLATED_args": " ".join(expanded_args),
+        "TEMPLATED_bash_runfiles_path": _to_manifest_path(ctx, ctx.files._bash_runfile_helper[0]),
         "TEMPLATED_env_vars": env_vars,
         "TEMPLATED_expected_exit_code": str(expected_exit_code),
         "TEMPLATED_lcov_merger_script": _to_manifest_path(ctx, ctx.file._lcov_merger_script),

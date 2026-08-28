@@ -1,0 +1,24 @@
+load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary", "nodejs_test")
+
+exports_files([
+    "package.json",
+    "postinstall.js",
+    "yarn.lock",
+])
+
+nodejs_binary(
+    name = "main",
+    data = ["@npm//left-pad"],
+    entry_point = ":main.js",
+)
+
+nodejs_test(
+    name = "main_test",
+    data = ["@npm//left-pad"],
+    entry_point = ":main.spec.js",
+)
+
+alias(
+    name = "yarn",
+    actual = "@nodejs//:yarn",
+)

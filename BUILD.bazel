@@ -79,6 +79,7 @@ pkg_npm(
     srcs = glob(["*.bzl"]) + [
         "BUILD.bazel",
         "LICENSE",
+        "MODULE.bazel",
     ],
     # Don't replace the default 0.0.0-PLACEHOLDER for this pkg_npm since
     # we are packaging up the packager itself and this replacement will break it
