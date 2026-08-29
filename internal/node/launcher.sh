@@ -16,6 +16,12 @@
 # --- begin runfiles.bash initialization v2 ---
 # Copy-pasted from the Bazel Bash runfiles library v2.
 set -uo pipefail; f=TEMPLATED_bash_runfiles_path
+# runfiles.bash falls back to discovering an unexported runfiles directory by
+# looking for itself under a hardcoded repository name, which the canonical
+# repository names bzlmod generates do not match.
+if [[ -z "${RUNFILES_DIR:-}" && -z "${RUNFILES_MANIFEST_FILE:-}" && -e "$0.runfiles/$f" ]]; then
+  export RUNFILES_DIR="$0.runfiles"
+fi
 source "${RUNFILES_DIR:-/dev/null}/$f" 2>/dev/null || \
   source "$(grep -sm1 "^$f " "${RUNFILES_MANIFEST_FILE:-/dev/null}" | cut -f2- -d' ')" 2>/dev/null || \
   source "$0.runfiles/$f" 2>/dev/null || \

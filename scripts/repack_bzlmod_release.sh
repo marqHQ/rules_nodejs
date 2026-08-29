@@ -26,6 +26,8 @@ readonly OVERLAY=(
   internal/node/launcher.sh
   internal/node/node.bzl
   internal/node/node_repositories.bzl
+  internal/npm_install/generate_build_file.ts
+  internal/npm_install/index.js
 )
 
 base="${1:-}"

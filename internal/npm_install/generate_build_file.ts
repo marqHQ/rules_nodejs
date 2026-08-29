@@ -346,7 +346,7 @@ def _maybe(repo_rule, name, **kwargs):
     _maybe(
         copy_repository,
         name = "${workspace}",
-        marker_file = "@${WORKSPACE}//_workspaces/${workspace}:_bazel_workspace_marker",
+        marker_file = "@@${WORKSPACE}//_workspaces/${workspace}:_bazel_workspace_marker",
     )
 `;
 
@@ -1172,7 +1172,7 @@ export function printIndexBzl(pkg: Dep) {
         `load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary", "nodejs_test", "npm_package_bin")
 
 `;
-    const data = [`@${WORKSPACE}//${pkg._dir}:${pkg._name}`];
+    const data = [`@@${WORKSPACE}//${pkg._dir}:${pkg._name}`];
     if (pkg._dynamicDependencies) {
       data.push(...pkg._dynamicDependencies);
     }
@@ -1184,11 +1184,11 @@ export function printIndexBzl(pkg: Dep) {
 def ${name.replace(/-/g, '_')}(**kwargs):
     output_dir = kwargs.pop("output_dir", False)
     if "outs" in kwargs or output_dir:
-        npm_package_bin(tool = "@${WORKSPACE}//${pkg._dir}/bin:${
+        npm_package_bin(tool = "@@${WORKSPACE}//${pkg._dir}/bin:${
           name}", output_dir = output_dir, **kwargs)
     else:
         nodejs_binary(
-            entry_point = "@${WORKSPACE}//:node_modules/${pkg._dir}/${path}",
+            entry_point = "@@${WORKSPACE}//:node_modules/${pkg._dir}/${path}",
             data = [${data.map(p => `"${p}"`).join(', ')}] + kwargs.pop("data", []),
             templated_args = ["--nobazel_patch_module_resolver"] + kwargs.pop("templated_args", []),${
           additionalAttributes(pkg, name)}
@@ -1198,7 +1198,7 @@ def ${name.replace(/-/g, '_')}(**kwargs):
 # Just in case ${name} is a test runner, also make a test rule for it
 def ${name.replace(/-/g, '_')}_test(**kwargs):
     nodejs_test(
-      entry_point = "@${WORKSPACE}//:node_modules/${pkg._dir}/${path}",
+      entry_point = "@@${WORKSPACE}//:node_modules/${pkg._dir}/${path}",
       data = [${data.map(p => `"${p}"`).join(', ')}] + kwargs.pop("data", []),
       templated_args = ["--nobazel_patch_module_resolver"] + kwargs.pop("templated_args", []),${
           additionalAttributes(pkg, name)}
