@@ -1,0 +1,28 @@
+package(default_visibility = ["//visibility:public"])
+
+licenses(["notice"])
+
+exports_files(["LICENSE"])
+
+load("@build_bazel_rules_nodejs//:index.bzl", "js_library")
+
+
+
+js_library(
+    name = "isBinaryFile",
+    srcs = [
+        "src/index.js",
+        "package.json",
+    ],
+    package_name = "isbinaryfile",
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "package_contents",
+    srcs = [
+        "BUILD.bazel",
+        "LICENSE",
+        ":isBinaryFile",
+    ]
+)
