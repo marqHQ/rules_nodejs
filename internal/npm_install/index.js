@@ -22,6 +22,7 @@ let config = {
     strict_visibility: true,
     workspace_rerooted_path: '',
     workspace: '',
+    workspace_label: '',
 };
 function generateBuildFileHeader(visibility = PUBLIC_VISIBILITY) {
     return `# Generated file from ${config.rule_type} rule.
@@ -73,7 +74,7 @@ async function createFileSymlink(target, p) {
 }
 async function main() {
     config = require('./generate_config.json');
-    config.limited_visibility = `@${config.workspace}//:__subpackages__`;
+    config.limited_visibility = `${config.workspace_label}//:__subpackages__`;
     if (config.exports_directories_only) {
         NODE_MODULES_PACKAGE_NAME = '$node_modules_dir$';
     }
@@ -301,7 +302,7 @@ def _maybe(repo_rule, name, **kwargs):
     _maybe(
         copy_repository,
         name = "${workspace}",
-        marker_file = "@${config.workspace}//_workspaces/${workspace}:_bazel_workspace_marker",
+        marker_file = "${config.workspace_label}//_workspaces/${workspace}:_bazel_workspace_marker",
     )
 `;
     await writeFile(`install_${workspace}.bzl`, bzlFile);
@@ -685,7 +686,7 @@ alias(
 npm_umd_bundle(
     name = "${pkg._name}__umd",
     package_name = "${pkg._moduleName}",
-    entry_point = { "@${config.workspace}//:node_modules/${pkg._dir}": "${mainEntryPoint}" },
+    entry_point = { "${config.workspace_label}//:node_modules/${pkg._dir}": "${mainEntryPoint}" },
     package = ":${pkg._name}",
 )
 
@@ -835,7 +836,7 @@ js_library(
 npm_umd_bundle(
     name = "${pkg._name}__umd",
     package_name = "${pkg._moduleName}",
-    entry_point = "@${config.workspace}//:node_modules/${pkg._dir}/${mainEntryPoint}",
+    entry_point = "${config.workspace_label}//:node_modules/${pkg._dir}/${mainEntryPoint}",
     package = ":${pkg._name}",
 )
 
@@ -892,8 +893,8 @@ function printPackageBin(pkg) {
         }
         for (const [name, path] of executables.entries()) {
             const entryPoint = config.exports_directories_only ?
-                `{ "@${config.workspace}//:node_modules/${pkg._dir}": "${path}" }` :
-                `"@${config.workspace}//:node_modules/${pkg._dir}/${path}"`;
+                `{ "${config.workspace_label}//:node_modules/${pkg._dir}": "${path}" }` :
+                `"${config.workspace_label}//:node_modules/${pkg._dir}/${path}"`;
             result += `# Wire up the \`bin\` entry \`${name}\`
 nodejs_binary(
     name = "${name}",
@@ -914,21 +915,21 @@ function printIndexBzl(pkg) {
             `load("@build_bazel_rules_nodejs//:index.bzl", "nodejs_binary", "nodejs_test", "npm_package_bin")
 
 `;
-        const data = [`@${config.workspace}//${pkg._dir}:${pkg._name}`];
+        const data = [`${config.workspace_label}//${pkg._dir}:${pkg._name}`];
         if (pkg._dynamicDependencies) {
             data.push(...pkg._dynamicDependencies);
         }
         for (const [name, path] of executables.entries()) {
             const entryPoint = config.exports_directories_only ?
-                `{ "@${config.workspace}//:node_modules/${pkg._dir}": "${path}" }` :
-                `"@${config.workspace}//:node_modules/${pkg._dir}/${path}"`;
+                `{ "${config.workspace_label}//:node_modules/${pkg._dir}": "${path}" }` :
+                `"${config.workspace_label}//:node_modules/${pkg._dir}/${path}"`;
             result = `${result}
 
 # Generated helper macro to call ${name}
 def ${name.replace(/-/g, '_')}(**kwargs):
     output_dir = kwargs.pop("output_dir", False)
     if "outs" in kwargs or output_dir:
-        npm_package_bin(tool = "@${config.workspace}//${pkg._dir}/bin:${name}", output_dir = output_dir, **kwargs)
+        npm_package_bin(tool = "${config.workspace_label}//${pkg._dir}/bin:${name}", output_dir = output_dir, **kwargs)
     else:
         nodejs_binary(
             entry_point = ${entryPoint},

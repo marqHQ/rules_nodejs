@@ -11,6 +11,9 @@ packages/angular/node_modules
 examples/angular/node_modules
 examples/user_managed_deps/node_modules
 
+# Nested module with its own MODULE.bazel
+e2e/bzlmod
+
 # **/dist
 dist
 examples/user_managed_deps/dist

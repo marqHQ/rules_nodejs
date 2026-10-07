@@ -135,6 +135,9 @@ def _write_loader_script(ctx):
     )
 
 # Avoid using non-normalized paths (workspace/../other_workspace/path)
+def _source_map_support_register_script(ctx):
+    return [f for f in ctx.files._source_map_support_files if f.basename == "register.js"][0]
+
 def _to_manifest_path(ctx, file):
     if file.short_path.startswith("../"):
         return file.short_path[3:]
@@ -307,6 +310,7 @@ fi
         #       Need a smarter split operation than `expanded_arg.split(" ")` as it will split
         #       up args with intentional spaces and it will fail for expanded files with spaces.
         "TEMPLATED_args": " ".join(expanded_args),
+        "TEMPLATED_bash_runfiles_path": _to_manifest_path(ctx, ctx.files._bash_runfile_helper[0]),
         "TEMPLATED_env_vars": env_vars,
         "TEMPLATED_expected_exit_code": str(expected_exit_code),
         "TEMPLATED_lcov_merger_script": _to_manifest_path(ctx, ctx.file._lcov_merger_script),
@@ -317,6 +321,7 @@ fi
         "TEMPLATED_repository_args": _to_manifest_path(ctx, ctx.file._repository_args),
         "TEMPLATED_require_patch_script": _to_manifest_path(ctx, ctx.outputs.require_patch_script),
         "TEMPLATED_runfiles_helper_script": _to_manifest_path(ctx, ctx.file._runfile_helpers_main),
+        "TEMPLATED_source_map_support_register_script": _to_manifest_path(ctx, _source_map_support_register_script(ctx)),
         "TEMPLATED_vendored_node": "" if is_builtin else strip_external(ctx.file._node.path),
     }
 

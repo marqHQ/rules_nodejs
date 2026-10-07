@@ -1,0 +1,34 @@
+"""Smoke test for consuming build_bazel_rules_nodejs as a Bazel module."""
+
+module(
+    name = "bzlmod_smoke",
+    version = "0.0.0",
+)
+
+bazel_dep(name = "build_bazel_rules_nodejs", version = "4.4.5")
+
+# Point at the tree `bazel build //:release` packages. Real consumers use
+# archive_override against the published release tarball instead.
+local_path_override(
+    module_name = "build_bazel_rules_nodejs",
+    path = "../../dist/bin/rules_nodejs_package",
+)
+
+node = use_extension("@build_bazel_rules_nodejs//:extensions.bzl", "node")
+node.toolchain(
+    node_repositories = {
+        "14.15.0-linux_amd64": [
+            "node-v14.15.0-linux-x64.tar.xz",
+            "node-v14.15.0-linux-x64",
+            "93e5b94cfaa3edec80832725f8c09cde2cd0c327da89ad9ad811cf9a1b5d0f1b",
+        ],
+    },
+    node_version = "14.15.0",
+)
+
+# @nodejs aliases the host-platform @nodejs_<os>_<arch> repo; the monorepo
+# references @nodejs//:yarn.
+use_repo(node, "nodejs")
+
+deps = use_extension("//:extensions.bzl", "deps")
+use_repo(deps, "npm")

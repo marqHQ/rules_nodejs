@@ -453,6 +453,10 @@ This can happen with symlink_node_modules enabled since your workspace node_modu
             else:
                 fail("Error applying patch %s in %s:\n%s%s" % (str(patch_file), working_directory, st.stderr, st.stdout))
 
+def _repository_label_prefix():
+    # bzlmod gives repositories canonical names, which only resolve behind "@@".
+    return "@@" if str(Label("//:all")).startswith("@@") else "@"
+
 def _create_build_files(repository_ctx, rule_type, node, lock_file, generate_local_modules_build_files):
     repository_ctx.report_progress("Processing node_modules: installing Bazel packages and generating BUILD files")
     if repository_ctx.attr.manual_build_file_contents:
@@ -478,6 +482,7 @@ def _create_build_files(repository_ctx, rule_type, node, lock_file, generate_loc
             rule_type = rule_type,
             strict_visibility = repository_ctx.attr.strict_visibility,
             workspace = repository_ctx.attr.name,
+            workspace_label = _repository_label_prefix() + repository_ctx.attr.name,
             workspace_rerooted_path = _WORKSPACE_REROOTED_PATH,
         ),
     )

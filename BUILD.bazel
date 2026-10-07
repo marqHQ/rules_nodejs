@@ -76,6 +76,8 @@ pkg_npm(
     srcs = [
         "BUILD.bazel",
         "LICENSE",
+        "MODULE.bazel",
+        "extensions.bzl",
         "index.bzl",
         "package.bzl",
         "providers.bzl",

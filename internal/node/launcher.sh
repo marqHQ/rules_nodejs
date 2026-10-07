@@ -15,7 +15,7 @@
 
 # --- begin runfiles.bash initialization v2 ---
 # Copy-pasted from the Bazel Bash runfiles library v2.
-set -uo pipefail; f=build_bazel_rules_nodejs/third_party/github.com/bazelbuild/bazel/tools/bash/runfiles/runfiles.bash
+set -uo pipefail; f=TEMPLATED_bash_runfiles_path
 source "${RUNFILES_DIR:-/dev/null}/$f" 2>/dev/null || \
   source "$(grep -sm1 "^$f " "${RUNFILES_MANIFEST_FILE:-/dev/null}" | cut -f2- -d' ')" 2>/dev/null || \
   source "$0.runfiles/$f" 2>/dev/null || \
@@ -374,7 +374,7 @@ else
     fi
   fi
   # Always set up source-map-support using our vendored copy, just like the require_patch_script
-  register_source_map_support=$(rlocation build_bazel_rules_nodejs/third_party/github.com/source-map-support/register.js)
+  register_source_map_support=$(rlocation TEMPLATED_source_map_support_register_script)
   LAUNCHER_NODE_OPTIONS+=( "--require" "${register_source_map_support}" )
   if [[ -n "TEMPLATED_entry_point_main" ]]; then
     MAIN="${MAIN}/"TEMPLATED_entry_point_main
