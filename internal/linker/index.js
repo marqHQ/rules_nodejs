@@ -69,6 +69,18 @@ function gracefulLstat(path) {
         }
     });
 }
+function gracefulUnlink(path) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield fs.promises.unlink(path);
+        }
+        catch (e) {
+            if (e.code !== 'ENOENT') {
+                throw e;
+            }
+        }
+    });
+}
 function gracefulReadlink(path) {
     try {
         return fs.readlinkSync(path);
@@ -105,7 +117,7 @@ function unlink(moduleName) {
         }
         else {
             log_verbose("Deleting file: ", moduleName);
-            yield fs.promises.unlink(moduleName);
+            yield gracefulUnlink(moduleName);
         }
     });
 }
